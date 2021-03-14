@@ -105,7 +105,6 @@ and ready for loading into MongoDB.
 
 # Parses "hdb" file from the IRC Poker Database http://poker.cs.ualberta.ca/irc_poker_database.html
 from builtins import str
-from ColorPrint import print
 import os
 from tarfile import TarFile
 import re
@@ -113,7 +112,7 @@ import codecs
 import json
 
 # ENVIRONMENT VARIABLES -- CHANGE THESE TO FIT YOUR ENVIRONMENT
-tgz_extract_directory = "/Users/allenfrostline/Downloads/"
+tgz_extract_directory = "/home/szymon/inne/ips/data/"
 OUTFILE = tgz_extract_directory + "hands.json"
 LOCAL_OS = "mac"  # valid values are "mac" or "pc"
 # END ENVIRONMENT VARIABLES
@@ -156,8 +155,7 @@ bet_action_cats = ["p", "f", "t", "r"]  # p=pre-flop, f=flop, t=turn, r=river
 folder_search_re = re.compile(r'\d{6}$', re.IGNORECASE)
 tgz_search_re = re.compile(r'^\S*.\d{6}.tgz$', re.IGNORECASE)
 valid_game_types = {
-    "holdem", "holdem1", "holdem2", "holdem3", "holdemii", "holdempot",
-    "nolimit", "tourney"
+    "holdem", "holdem1", "holdem2", "holdem3", "holdemii",
 }
 
 
@@ -196,25 +194,6 @@ def parse_hdb_file(hdb_file, hands, invalid_keys):
                         invalid_keys.add(_id)
                     pots.append(pot)
                     i = i + 1
-                ''' Old Code
-                board = []
-                for b in board_card_data:
-                    board_card = {}
-                    if b != "":
-
-                        if board_card_data.index(b) + 1 <= 3:
-                            board_card["stage"] = "flop"
-                        elif board_card_data.index(b) + 1 == 4:
-                            board_card["stage"] = "turn"
-                        elif board_card_data.index(b) + 1 == 5:
-                            board_card["stage"] = "river"
-                        if b[0] in deck.keys():
-                            board_card["value"] = deck[b[0]]
-                        else:
-                            board_card["value"] = b[0]
-                        board_card["suit"] = suits[b[1]]
-                        board.append(board_card)
-                '''
 
                 hand["pots"] = pots
                 hand["board"] = board
@@ -289,14 +268,6 @@ def parse_pdb_file(pdb_file, id_prefix, hands, invalid_keys):
                 if len(line_parts) == 13:
                     for card in line_parts[11:13]:
                         player_cards.append(card)
-                        ''' Old code
-                        if item[0] in deck.keys():
-                            player_card["value"] = deck[item[0]]
-                        else:
-                            player_card["value"] = item[0]
-                        player_card["suit"] = suits[item[1]]
-                        player_cards.append(player_card)
-                        '''
 
                 if _id in hands:
                     if _id not in invalid_keys:
@@ -361,8 +332,13 @@ def loop_file_groups(file_groups):
             hands = {}
             hands_list = []
             invalid_keys = set()
-            print("Processing " + fg + " (file group #" + str(i) + " of " + str(
-                total_to_process) + ")")
+            print(
+                "Processing " +
+                fg + 
+                " (file group #" + 
+                str(i) + " of " + 
+                str(total_to_process) + 
+                ")")
             hdb_file = fg + "hdb"
             hroster_file = fg + "hroster"
             pdb_directory = fg + "pdb/"
@@ -373,10 +349,13 @@ def loop_file_groups(file_groups):
             hands = {key: hands[key] for key in hands if key not in inv_keys}
             hands_list = fix_players_list(list(hands.values()))
             append_hands_list_to_json_file(hands_list)
-            print(str(len(hands_list)) + " valid hands added to JSON file, " + str(
-                len(inv_keys)) + " invalid hands", color='green')
+            print(
+                str(len(hands_list)) + 
+                " valid hands added to JSON file, " + 
+                str(len(inv_keys)) + 
+                " invalid hands")
             running_total = running_total + len(hands_list)
-            print(str(running_total) + " total hands added so far", color='yellow')
+            print(str(running_total) + " total hands added so far")
             print("Finished processing " + fg + '\n')
         except IndexError:
             print('Failed to process ' + fg + '\n')
@@ -402,10 +381,17 @@ def loop_tgz(extract_dir):
                                 f.name = re.sub(r'[|]', '_', f.name)
                         tar.extractall(extract_dir)
                         tar.close()
-                        file_groups.append(tgz_extract_directory + game_type +
-                                           SLASH + file_yearmonth + SLASH)
+                        file_groups.append(
+                            tgz_extract_directory + 
+                            game_type +
+                            SLASH + 
+                            file_yearmonth + 
+                            SLASH)
                     else:
-                        print("Skipping " + tgz_file + " because it is for an invalid game type", color='red')
+                        print(
+                            "Skipping " + 
+                            tgz_file + 
+                            " because it is for an invalid game type")
         return file_groups
     except IOError:
         # invalid_keys.add(_id)
@@ -422,7 +408,6 @@ def append_hands_list_to_json_file(hands_list):
 
 
 file_groups = loop_tgz(tgz_extract_directory)
-print()
 if os.path.isfile(OUTFILE): os.remove(OUTFILE)
 loop_file_groups(file_groups)
 print("Finished.")
